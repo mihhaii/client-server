@@ -5,6 +5,8 @@ import java.io.ObjectOutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Scanner;
 
 public class Server {
 	
@@ -21,6 +23,7 @@ public class Server {
 				Socket socket = serverSocket.accept();
 				ClientThread newClient = new ClientThread(socket);
 				clients.add(newClient);
+				newClient.start();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -53,11 +56,42 @@ public class Server {
 		@Override
 		public void run() {
 			super.run();
+			
+			try {
+				ChatMessage message = (ChatMessage) input.readObject();
+				System.out.println(this.getName()+ "("+ new Date().toString()+ "): "+message.getMessage());
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+			
+				
 		}
 		
 	}
 	
 	public static void main(String[] args) {
 		Server server = new Server();
+		Scanner scan = new Scanner(System.in);
+		while(true) {
+			    System.out.print("> ");
+			    String msg = scan.nextLine();
+		if(msg!=null){
+			ChatMessage cm = new ChatMessage(ChatMessage.MESSAGE, msg);
+			server.sendMessage(cm);
+		
+		}
+		}
+	}
+
+	private void sendMessage(ChatMessage cm) {
+		for(ClientThread ct:this.clients){
+			try {
+				ct.output.writeObject(cm);
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 }
